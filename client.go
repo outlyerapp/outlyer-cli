@@ -1,10 +1,12 @@
 package outlyer
 
 import (
-	"errors"
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/spf13/viper"
 )
 
 // Get will perform a GET request to the Outlyer API
@@ -37,8 +39,11 @@ func Get(endpoint string) ([]byte, error) {
 		return nil, err
 	}
 
-	if resp.StatusCode != 200 {
-		return nil, errors.New(string(content))
+	if resp.StatusCode >= 400 {
+		viper.SetConfigType("json")
+		viper.ReadConfig(bytes.NewReader(content))
+		error := fmt.Errorf("Error Code: %s\nError Message: %s", viper.GetString("status"), viper.GetString("detail"))
+		return nil, error
 	}
 
 	return content, nil
