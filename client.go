@@ -4,18 +4,19 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/spf13/viper"
 )
 
-// Get will perform a GET request to the Outlyer API
+// Get will set up the API token and default headers before issuing a GET request to the Outlyer API
 func Get(endpoint string) ([]byte, error) {
 	baseURL := UserConfig.GetString("api-url")
-	url := baseURL + endpoint
+	completeURL := baseURL + endpoint
 
 	client := http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", completeURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +31,7 @@ func Get(endpoint string) ([]byte, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		log.Fatalln("Error communicating with Outlyer API", err)
 	}
 	defer resp.Body.Close()
 
@@ -40,9 +41,9 @@ func Get(endpoint string) ([]byte, error) {
 	}
 
 	if resp.StatusCode >= 400 {
-		viper.SetConfigType("json")
+		viper.SetConfigType("yaml")
 		viper.ReadConfig(bytes.NewReader(content))
-		error := fmt.Errorf("Error Code: %s\nError Message: %s", viper.GetString("status"), viper.GetString("detail"))
+		error := fmt.Errorf("\nError Code: %s\nError Message: %s\n", viper.GetString("status"), viper.GetString("detail"))
 		return nil, error
 	}
 
