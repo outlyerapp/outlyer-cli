@@ -12,7 +12,8 @@ func init() {
 		Use:   "outlyer",
 		Short: "Outlyer CLI allows to easily manage your Outlyer account via command line",
 	}
-	rootCmd.AddCommand(command.ConfigureCommand())
+	rootCmd.AddCommand(
+		command.NewConfigureCommand())
 }
 
 func main() {

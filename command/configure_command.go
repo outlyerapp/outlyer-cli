@@ -15,12 +15,12 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-// ConfigureCommand validates the API token and persists it locally
+// NewConfigureCommand validates the API token and persists it locally
 // in the user's configuration file.
-func ConfigureCommand() *cobra.Command {
+func NewConfigureCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "configure",
-		Short: "Sets up the Outlyer CLI by validating your API token",
+		Short: "Set up the Outlyer CLI by validating your API token",
 		Run:   createLocalConfig,
 	}
 	return cmd
