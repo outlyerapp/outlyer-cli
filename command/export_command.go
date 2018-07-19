@@ -116,7 +116,7 @@ func exportSingleResourceToDisk(outputFolder string, resp []byte) {
 
 	os.MkdirAll(outputFolder, 0755)
 
-	resourceFileName := outputFolder + resource["name"].(string) + ".yaml"
+	resourceFileName := outputFolder + strings.Replace(resource["name"].(string), ".py", "", 1) + ".yaml"
 	resourceInBytes, _ := yaml.Marshal(&resource)
 
 	err := ioutil.WriteFile(resourceFileName, resourceInBytes, 0644)
@@ -134,7 +134,7 @@ func exportMultipleResourcesToDisk(outputFolder string, resp []byte) {
 	os.MkdirAll(outputFolder, 0755)
 
 	for _, resource := range resources {
-		resourceFileName := outputFolder + resource["name"].(string) + ".yaml"
+		resourceFileName := outputFolder + strings.Replace(resource["name"].(string), ".py", "", 1) + ".yaml"
 		resourceInBytes, _ := yaml.Marshal(&resource)
 
 		err := ioutil.WriteFile(resourceFileName, resourceInBytes, 0644)
