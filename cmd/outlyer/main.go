@@ -14,7 +14,8 @@ func init() {
 	}
 	rootCmd.AddCommand(
 		command.NewConfigureCommand(),
-		command.NewGetCommand())
+		command.NewGetCommand(),
+		command.NewExportCommand())
 }
 
 func main() {
