@@ -3,11 +3,10 @@ package outlyer
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 )
 
-// Get will set up the API token and default headers before issuing a GET request to the Outlyer API
+// Get will set the API token and default headers before issuing a GET request to the Outlyer API
 func Get(endpoint string) ([]byte, error) {
 	baseURL := UserConfig.GetString("api-url")
 	completeURL := baseURL + endpoint
@@ -28,7 +27,7 @@ func Get(endpoint string) ([]byte, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatalln("Error communicating with Outlyer API", err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
@@ -38,8 +37,7 @@ func Get(endpoint string) ([]byte, error) {
 	}
 
 	if resp.StatusCode >= 400 {
-		error := fmt.Errorf("\n%s", content)
-		return nil, error
+		return nil, fmt.Errorf("%s", content)
 	}
 
 	return content, nil
