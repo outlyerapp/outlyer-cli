@@ -2,7 +2,6 @@ package command
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -11,12 +10,11 @@ import (
 
 	"github.com/outlyer/outlyer-cli"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	yaml "gopkg.in/yaml.v2"
 )
 
-// NewConfigureCommand validates the API token and persists it locally
-// in the user's configuration file.
+// NewConfigureCommand creates a Command for setting up the user's local
+// Outlyer yaml configuration file given the API token
 func NewConfigureCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "configure",
@@ -27,47 +25,40 @@ func NewConfigureCommand() *cobra.Command {
 }
 
 type cliConfig struct {
-	APIToken       string `yaml:"api-token"`
-	DefaultAccount string `yaml:"default-account"`
+	APIToken string `yaml:"api-token"`
 }
 
-// createLocalConfig uses the API token provided by the user to fetch the default user account
-// and creates a hidden Outlyer yaml configuration file in the user's $HOME directory.
+// createLocalConfig validates the API token provided by the user
+// and persists it locally by creating the a hidden Outlyer yaml configuration file
+// at the user's $HOME directory.
 func createLocalConfig(cmd *cobra.Command, args []string) {
 	for i := 0; i < 3; i++ {
+		// Reads the API token from stdin
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Print("Please enter your API token: ")
 		apiToken, _ := reader.ReadString('\n')
 		apiToken = strings.Replace(apiToken, "\n", "", -1)
+
 		outlyer.UserConfig.Set("api-token", apiToken)
 
-		resp, err := outlyer.Get("/user")
+		_, err := outlyer.Get("/user")
 		if err != nil {
-			fmt.Println("Error validating the API token.", err)
+			fmt.Fprintln(os.Stderr, fmt.Errorf("Error: invalid API token\n%s", err))
 			continue
 		}
 
-		viper.SetConfigType("yaml")
-		err = viper.ReadConfig(bytes.NewReader(resp))
+		userConfig := cliConfig{apiToken}
+
+		userConfigInBytes, err := yaml.Marshal(userConfig)
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		defaultAccount := viper.GetString("default_account")
-		userConfig := cliConfig{apiToken, defaultAccount}
-
-		userConfigYaml, err := yaml.Marshal(userConfig)
+		err = ioutil.WriteFile(os.Getenv("HOME")+"/.outlyer.yaml", userConfigInBytes, 0644)
 		if err != nil {
 			log.Fatalln(err)
 		}
-
-		err = ioutil.WriteFile(os.Getenv("HOME")+"/.outlyer.yaml", userConfigYaml, 0644)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		fmt.Printf("\nSuccess! Outlyer CLI is configured and ready to use.\n")
-		return
+		ExitWithSuccess("Success! Outlyer CLI is configured and ready to use")
 	}
-	fmt.Println("Please contact Outlyer support.")
-	os.Exit(1)
+	ExitWithError(ExitError, fmt.Errorf("Could not configure Outlyer CLI. Please contact Outlyer support"))
 }
