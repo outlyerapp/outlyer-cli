@@ -1,13 +1,10 @@
 package outlyer
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
-
-	"github.com/spf13/viper"
 )
 
 // Get will set up the API token and default headers before issuing a GET request to the Outlyer API
@@ -41,9 +38,7 @@ func Get(endpoint string) ([]byte, error) {
 	}
 
 	if resp.StatusCode >= 400 {
-		viper.SetConfigType("yaml")
-		viper.ReadConfig(bytes.NewReader(content))
-		error := fmt.Errorf("\nError Code: %s\nError Message: %s\n", viper.GetString("status"), viper.GetString("detail"))
+		error := fmt.Errorf("\n%s", content)
 		return nil, error
 	}
 
