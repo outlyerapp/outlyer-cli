@@ -1,6 +1,7 @@
 package command
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -105,8 +106,23 @@ func export(resourceToFetch, account, outputFolder string) {
 	os.MkdirAll(outputFolder, 0755)
 
 	for _, resource := range resources {
-		resourceFileName := outputFolder + strings.Replace(resource["name"].(string), ".py", "", 1) + ".yaml"
-		resourceInBytes, _ := yaml.Marshal(&resource)
+		var resourceInBytes []byte
+		var resourceFileName string
+		resourceName := resource["name"].(string)
+
+		if strings.Contains(resourceToFetch, "plugins") {
+			resourceInBytes, err = base64.StdEncoding.DecodeString(resource["content"].(string))
+			if err != nil {
+				ExitWithError(ExitError, fmt.Errorf("Could not decode plugin %s\n%s", resourceName, err))
+			}
+			resourceFileName = outputFolder + resourceName
+		} else {
+			resourceInBytes, err = yaml.Marshal(&resource)
+			if err != nil {
+				ExitWithError(ExitError, fmt.Errorf("Error marshalling resource %s\n%s", resourceName, err))
+			}
+			resourceFileName = outputFolder + resourceName + ".yaml"
+		}
 
 		err := ioutil.WriteFile(resourceFileName, resourceInBytes, 0644)
 		if err != nil {
