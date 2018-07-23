@@ -1,7 +1,9 @@
 package outlyer
 
 import (
+	"fmt"
 	"os"
+	"os/user"
 
 	"github.com/spf13/viper"
 )
@@ -10,7 +12,13 @@ import (
 var UserConfig = viper.New()
 
 func init() {
-	UserConfig.AddConfigPath(os.Getenv("HOME"))
+	user, err := user.Current()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Could not read user's home directory", err)
+		os.Exit(1)
+	}
+
+	UserConfig.AddConfigPath(user.HomeDir)
 	UserConfig.SetConfigName(".outlyer")
 	UserConfig.SetDefault("headers.common.accept", "application/yaml")
 	UserConfig.SetDefault("headers.common.user-agent", "outlyer/1.0")

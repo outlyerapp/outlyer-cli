@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/user"
 	"strings"
 	"sync"
 
@@ -151,7 +152,11 @@ func getOutputFolder(outputFolderFlag, resourceToFetch string) string {
 		outputFolderFlag = "."
 	}
 	if outputFolderFlag[:1] == "~" { // Replace ~ by the user's full home path
-		outputFolderFlag = strings.Replace(outputFolderFlag, "~", os.Getenv("HOME"), 1)
+		user, err := user.Current()
+		if err != nil {
+			ExitWithError(ExitError, err)
+		}
+		outputFolderFlag = strings.Replace(outputFolderFlag, "~", user.HomeDir, 1)
 	}
 	if outputFolderFlag[len(outputFolderFlag)-1:] != "/" { // Appends a / to the end of the folder path
 		outputFolderFlag = outputFolderFlag + "/"

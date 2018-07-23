@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/user"
 	"strings"
 
 	"github.com/outlyer/outlyer-cli"
@@ -37,7 +38,8 @@ func createLocalConfig(cmd *cobra.Command, args []string) {
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Print("Please enter your API token: ")
 		apiToken, _ := reader.ReadString('\n')
-		apiToken = strings.Replace(apiToken, "\n", "", -1)
+		apiToken = strings.Replace(apiToken, "\n", "", -1) // removes return character on *unix and darwin
+		apiToken = strings.Replace(apiToken, "\r", "", -1) // removes return character on windows
 
 		outlyer.UserConfig.Set("api-token", apiToken)
 
@@ -51,10 +53,15 @@ func createLocalConfig(cmd *cobra.Command, args []string) {
 
 		userConfigInBytes, err := yaml.Marshal(userConfig)
 		if err != nil {
-			log.Fatalln(err)
+			ExitWithError(ExitError, err)
 		}
 
-		err = ioutil.WriteFile(os.Getenv("HOME")+"/.outlyer.yaml", userConfigInBytes, 0644)
+		user, err := user.Current()
+		if err != nil {
+			ExitWithError(ExitError, err)
+		}
+
+		err = ioutil.WriteFile(user.HomeDir+"/.outlyer.yaml", userConfigInBytes, 0644)
 		if err != nil {
 			log.Fatalln(err)
 		}
