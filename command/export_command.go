@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"sync"
 
 	outlyer "github.com/outlyer/outlyer-cli"
 	"github.com/spf13/cobra"
@@ -45,47 +46,41 @@ func exportCommand(cmd *cobra.Command, args []string) {
 	if account == "" {
 		ExitWithError(ExitBadArgs, fmt.Errorf("Account is required"))
 	}
-
 	if len(args) < 1 {
 		ExitWithError(ExitBadArgs, fmt.Errorf("Resource is required"))
 	}
 
 	outputFolderFlag := cmd.PersistentFlags().Lookup("folder").Value.String()
 
+	// Creates WaitGroup to wait for goroutines to finish exporting resources concurrently
+	var wg sync.WaitGroup
+
 	// Avoids fetching specific resources if the arguments contain "all"
 	for _, resourceToFetch := range args {
 		if resourceToFetch == "all" {
-			fmt.Print("Exporting alerts... ")
-			export("alerts", account, getOutputFolder(outputFolderFlag, "alerts"))
-			fmt.Println("Done!")
-
-			fmt.Print("Exporting checks... ")
-			export("checks", account, getOutputFolder(outputFolderFlag, "checks"))
-			fmt.Println("Done!")
-
-			fmt.Print("Exporting dashboards... ")
-			export("dashboards", account, getOutputFolder(outputFolderFlag, "dashboards"))
-			fmt.Println("Done!")
-
-			fmt.Print("Exporting plugins... ")
-			export("plugins", account, getOutputFolder(outputFolderFlag, "plugins"))
-			fmt.Println("Done!")
-
-			ExitWithSuccess("Your account was successfully exported")
+			wg.Add(4)
+			go export("alerts", account, getOutputFolder(outputFolderFlag, "alerts"), &wg)
+			go export("checks", account, getOutputFolder(outputFolderFlag, "checks"), &wg)
+			go export("dashboards", account, getOutputFolder(outputFolderFlag, "dashboards"), &wg)
+			go export("plugins", account, getOutputFolder(outputFolderFlag, "plugins"), &wg)
+			wg.Wait()
+			ExitWithSuccess("Done! Your account was successfully exported")
 		}
 	}
 
 	// There is no "all" argument, so fetches all listed resources
 	for _, resourceToFetch := range args {
-		fmt.Printf("Exporting %s... ", resourceToFetch)
-		export(resourceToFetch, account, getOutputFolder(outputFolderFlag, resourceToFetch))
-		fmt.Println("Done!")
+		wg.Add(1)
+		go export(resourceToFetch, account, getOutputFolder(outputFolderFlag, resourceToFetch), &wg)
 	}
-	ExitWithSuccess("Resources successfully exported")
+	wg.Wait()
+	ExitWithSuccess("Done! Resources successfully exported")
 }
 
 // export queries the resources for the given user account and persists them locally
-func export(resourceToFetch, account, outputFolder string) {
+func export(resourceToFetch, account, outputFolder string, wg *sync.WaitGroup) {
+	fmt.Printf("Exporting %s...\n", resourceToFetch)
+
 	resp, err := outlyer.Get("/accounts/" + account + "/" + resourceToFetch + "?view=export")
 	if err != nil {
 		ExitWithError(ExitError, fmt.Errorf("Could not fetch resource %s from account %s%s", resourceToFetch, account, err))
@@ -129,6 +124,7 @@ func export(resourceToFetch, account, outputFolder string) {
 			ExitWithError(ExitError, fmt.Errorf("Could not write resource %s to disk\n%s", resourceFileName, err))
 		}
 	}
+	wg.Done()
 }
 
 // convertCheckFields converts the format and variables field names into handler and env
