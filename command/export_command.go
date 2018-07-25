@@ -148,18 +148,17 @@ func convertCheckFields(checks []map[string]interface{}, outputFolder string) {
 
 // getOutputFolder is a helper function to build the correct output folder to export the given resource
 func getOutputFolder(outputFolderFlag, resourceToFetch string) string {
-	if outputFolderFlag == "" { // Replace empty by the current directory
-		outputFolderFlag = "."
-	}
-	if outputFolderFlag[:1] == "~" { // Replace ~ by the user's full home path
-		user, err := user.Current()
-		if err != nil {
-			ExitWithError(ExitError, err)
+	if outputFolderFlag != "" {
+		if outputFolderFlag[:1] == "~" { // Replace ~ by the user's full home path
+			user, err := user.Current()
+			if err != nil {
+				ExitWithError(ExitError, err)
+			}
+			outputFolderFlag = strings.Replace(outputFolderFlag, "~", user.HomeDir, 1)
 		}
-		outputFolderFlag = strings.Replace(outputFolderFlag, "~", user.HomeDir, 1)
-	}
-	if outputFolderFlag[len(outputFolderFlag)-1:] != "/" { // Appends a / to the end of the folder path
-		outputFolderFlag = outputFolderFlag + "/"
+		if outputFolderFlag[len(outputFolderFlag)-1:] != "/" { // Appends a / to the end of the folder path if it not exists
+			outputFolderFlag = outputFolderFlag + "/"
+		}
 	}
 
 	var baseResource string
