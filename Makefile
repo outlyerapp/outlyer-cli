@@ -28,6 +28,14 @@ lint: ## Run all the linters
 		--deadline=10m \
 		./...
 
+.PHONY: test
+test: ## Run all the tests
+	echo 'mode: atomic' > coverage.txt && go test -v -race -covermode=atomic -coverprofile=coverage.txt -timeout=30s ./...
+
+.PHONY: cover
+cover: test ## Run all the tests and opens the coverage report
+	go tool cover -html=coverage.txt
+
 .PHONY: build
 build: ## Build a binary
 	go build -v -o ./bin/outlyer ./cmd/outlyer
