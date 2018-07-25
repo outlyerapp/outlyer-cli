@@ -1,0 +1,40 @@
+project_name: outlyer
+builds:
+- env:
+  - CGO_ENABLED=0
+  goos:
+    - darwin
+    - linux
+    - windows
+  main: ./cmd/outlyer/main.go
+  binary: outlyer
+archive:
+  replacements:
+    darwin: Darwin
+    windows: Windows
+    linux: Linux
+    amd64: x86_64
+  format_overrides:
+  - goos: windows
+    format: zip
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+    - Merge pull request
+    - Merge branch
+brew:
+  name: outlyer
+  github:
+    owner: outlyerapp
+    name: outlyer-cli
+  folder: Formula
+  homepage: "https://www.outlyer.com/"
+  description: "Outlyer CLI allows to easily manage your Outlyer account via command line."
+  skip_upload: true
