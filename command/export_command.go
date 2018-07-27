@@ -17,14 +17,14 @@ import (
 // NewExportCommand creates a Command for exporting Outlyer resources to disk.
 func NewExportCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "export all|[resource]|[resource/name]",
+		Use:   "export .|[resource]|[resource/name]",
 		Short: "Export resources from the specified account. The available resources are: alerts, checks, dashboards and plugins",
 		Example: `
 Export the entire account resources (alerts, checks, dashboards and plugins) to the current folder:
-$ outlyer export all --account=<your_account>
+$ outlyer export . --account=<your_account>
 
 Export the entire account resources (alerts, checks, dashboards and plugins) to a specific folder:
-$ outlyer export all --account=<your_account> --folder=<your_folder>
+$ outlyer export . --account=<your_account> --folder=<your_folder>
 
 Export the account's alerts and dashboards to the current folder:
 $ outlyer export alerts dashboards --account=<your_account>
@@ -58,7 +58,7 @@ func exportCommand(cmd *cobra.Command, args []string) {
 
 	// Avoids fetching specific resources if the arguments contain "all"
 	for _, resourceToFetch := range args {
-		if resourceToFetch == "all" {
+		if resourceToFetch == "." {
 			wg.Add(4)
 			go export("alerts", account, getOutputFolder(outputFolderFlag, "alerts"), &wg)
 			go export("checks", account, getOutputFolder(outputFolderFlag, "checks"), &wg)
