@@ -1,10 +1,13 @@
 package command
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"regexp"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/spf13/cobra"
 )
@@ -140,4 +143,32 @@ func getResources(paths []string) []resource {
 		resources[i] = res
 	}
 	return resources
+}
+
+func convertPlugin(res resource) resource {
+	pluginBase64 := base64.StdEncoding.EncodeToString(res.bytes)
+	plugin := &plugin{Content: pluginBase64, Name: res.getNameWithExtension(), Encoding: "base64"}
+	pluginInBytes, _ := yaml.Marshal(&plugin)
+	res.bytes = pluginInBytes
+	return res
+}
+
+func convertCheckFieldsToSend(bytes []byte) []byte {
+	check := make(map[string]interface{})
+	yaml.Unmarshal(bytes, &check)
+
+	format := check["handler"]
+	variables := check["env"]
+
+	check["format"] = format
+	check["variables"] = variables
+
+	delete(check, "handler")
+	delete(check, "env")
+
+	checkInBytes, err := yaml.Marshal(check)
+	if err != nil {
+		ExitWithError(ExitError, fmt.Errorf("Error marshalling resource %s\n%s", check["name"], err))
+	}
+	return checkInBytes
 }
