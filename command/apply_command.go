@@ -2,6 +2,8 @@ package command
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"regexp"
 
 	"github.com/spf13/cobra"
@@ -65,4 +67,56 @@ func applyCommand(cmd *cobra.Command, args []string) {
 	if len(args) < 1 {
 		ExitWithError(ExitBadArgs, fmt.Errorf("Resource is required"))
 	}
+
+	paths := getPaths(args)
+}
+
+func getPaths(args []string) []string {
+	var paths []string
+
+	for _, arg := range args {
+		if !fileOrDirExists(arg) {
+			ExitWithError(ExitError, fmt.Errorf("%s: no such file or directory", arg))
+		}
+
+		fileInfo, _ := os.Stat(arg)
+		if fileInfo.IsDir() {
+			arg = appendSlashTo(arg)
+			dirWithResourceName, _ := regexp.Compile("(alerts|checks|dashboards|plugins)/")
+			if dirWithResourceName.MatchString(arg) { // Is the dir a resource name?
+				files, _ := ioutil.ReadDir(arg)
+				for _, file := range files { // Then add all resources from it
+					paths = append(paths, arg+file.Name())
+				}
+			} else {
+				// The dir name is not a valid resource name (like dir1), but does it have any subdir containing resources?
+				// Covers the case "apply dir1/ --account=my-account", where dir1 has subdirs "alerts", "checks", etc
+				files, _ := ioutil.ReadDir(arg)
+				for _, file := range files {
+					if file.IsDir() {
+						regex, _ := regexp.Compile("(alerts|checks|dashboards|plugins)")
+						if regex.MatchString(file.Name()) {
+							resources, _ := ioutil.ReadDir(arg + file.Name())
+							for _, resource := range resources {
+								paths = append(paths, arg+file.Name()+"/"+resource.Name())
+							}
+						}
+					}
+				}
+			}
+		} else {
+			validResourcePath, _ := regexp.Compile("(.*)(alerts|checks|dashboards|plugins)/[^.]+...[^.]")
+			if validResourcePath.MatchString(arg) {
+				paths = append(paths, arg)
+			}
+		}
+	}
+
+	paths = removeDuplicates(paths)
+
+	if len(paths) == 0 {
+		ExitWithError(ExitError, fmt.Errorf("could not find any resources to apply"))
+	}
+
+	return paths
 }
