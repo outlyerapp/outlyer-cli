@@ -1,14 +1,16 @@
-package outlyer
+package api
 
 import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/outlyer/outlyer-cli/config"
 )
 
-// APIResponse represents an Outlyer API response when HTTP response
-type APIResponse struct {
+// Response represents an Outlyer API response when HTTP response
+type Response struct {
 	Code        int
 	Body        []byte
 	ErrorDetail error
@@ -16,7 +18,7 @@ type APIResponse struct {
 
 // Get will set the API token and default headers before issuing a GET request to Outlyer API
 func Get(endpoint string) ([]byte, error) {
-	baseURL := UserConfig.GetString("api-url")
+	baseURL := config.CLI.GetString("api-url")
 	completeURL := baseURL + endpoint
 
 	client := http.Client{}
@@ -26,10 +28,10 @@ func Get(endpoint string) ([]byte, error) {
 	}
 
 	// Add request headers
-	token := UserConfig.GetString("api-token")
+	token := config.CLI.GetString("api-token")
 	req.Header.Add(http.CanonicalHeaderKey("Authorization"), fmt.Sprintf("Bearer %s", token))
-	req.Header.Add(http.CanonicalHeaderKey("Content-Type"), UserConfig.GetString("headers.post.content-type"))
-	commonHeaders := UserConfig.GetStringMapString("headers.common")
+	req.Header.Add(http.CanonicalHeaderKey("Content-Type"), config.CLI.GetString("headers.post.content-type"))
+	commonHeaders := config.CLI.GetStringMapString("headers.common")
 	for k, v := range commonHeaders {
 		req.Header.Add(http.CanonicalHeaderKey(k), v)
 	}
@@ -53,18 +55,18 @@ func Get(endpoint string) ([]byte, error) {
 }
 
 // Post will set the API token and default headers before issuing a POST request to Outlyer API
-func Post(endpoint string, payload []byte) (*APIResponse, error) {
+func Post(endpoint string, payload []byte) (*Response, error) {
 	return send(endpoint, "POST", payload)
 }
 
 // Patch will set the API token and default headers before issuing a PATCH request to Outlyer API
-func Patch(endpoint string, payload []byte) (*APIResponse, error) {
+func Patch(endpoint string, payload []byte) (*Response, error) {
 	return send(endpoint, "PATCH", payload)
 }
 
 // send wil issue an HTTP request for the given Outlyer API endpoint with the method and payload provided
-func send(endpoint, method string, payload []byte) (*APIResponse, error) {
-	baseURL := UserConfig.GetString("api-url")
+func send(endpoint, method string, payload []byte) (*Response, error) {
+	baseURL := config.CLI.GetString("api-url")
 	completeURL := baseURL + endpoint
 
 	client := http.Client{}
@@ -74,10 +76,10 @@ func send(endpoint, method string, payload []byte) (*APIResponse, error) {
 	}
 
 	// Add request headers
-	token := UserConfig.GetString("api-token")
+	token := config.CLI.GetString("api-token")
 	req.Header.Add(http.CanonicalHeaderKey("Authorization"), fmt.Sprintf("Bearer %s", token))
-	req.Header.Add(http.CanonicalHeaderKey("Content-Type"), UserConfig.GetString("headers.post.content-type"))
-	commonHeaders := UserConfig.GetStringMapString("headers.common")
+	req.Header.Add(http.CanonicalHeaderKey("Content-Type"), config.CLI.GetString("headers.post.content-type"))
+	commonHeaders := config.CLI.GetStringMapString("headers.common")
 	for k, v := range commonHeaders {
 		req.Header.Add(http.CanonicalHeaderKey(k), v)
 	}
@@ -93,7 +95,7 @@ func send(endpoint, method string, payload []byte) (*APIResponse, error) {
 		return nil, err
 	}
 
-	return &APIResponse{Code: resp.StatusCode, Body: content, ErrorDetail: getHTTPErrorBy(resp.StatusCode)}, nil
+	return &Response{Code: resp.StatusCode, Body: content, ErrorDetail: getHTTPErrorBy(resp.StatusCode)}, nil
 }
 
 func getHTTPErrorBy(responseCode int) error {
