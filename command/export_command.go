@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	outlyer "github.com/outlyer/outlyer-cli"
+	"github.com/outlyer/outlyer-cli/api"
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -82,9 +82,9 @@ func exportCommand(cmd *cobra.Command, args []string) {
 func export(resourceToFetch, account, outputFolder string, wg *sync.WaitGroup) {
 	fmt.Printf("Exporting %s...\n", resourceToFetch)
 
-	resp, err := outlyer.Get("/accounts/" + account + "/" + resourceToFetch + "?view=export")
+	resp, err := api.Get("/accounts/" + account + "/" + resourceToFetch + "?view=export")
 	if err != nil {
-		ExitWithError(ExitError, fmt.Errorf("Could not fetch resource %s from account %s%s", resourceToFetch, account, err))
+		ExitWithError(ExitError, fmt.Errorf("Could not fetch %s from account %s\n%s", resourceToFetch, account, err))
 	}
 
 	var resources []map[string]interface{}
@@ -164,7 +164,7 @@ func getOutputFolder(outputFolderFlag, resourceToFetch string) string {
 	var baseResource string
 	slashIndex := strings.Index(resourceToFetch, "/")
 	if slashIndex != -1 { // The user specified a single resource like 'dashboards/docker', so ignore '/docker'
-		baseResource = resourceToFetch[:slashIndex] + "/"
+		baseResource = resourceToFetch[:slashIndex+1]
 	} else {
 		baseResource = resourceToFetch + "/"
 	}

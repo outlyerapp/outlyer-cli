@@ -9,7 +9,8 @@ import (
 	"os/user"
 	"strings"
 
-	"github.com/outlyer/outlyer-cli"
+	"github.com/outlyer/outlyer-cli/api"
+	"github.com/outlyer/outlyer-cli/config"
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -41,9 +42,9 @@ func createLocalConfig(cmd *cobra.Command, args []string) {
 		apiToken = strings.Replace(apiToken, "\n", "", -1) // removes return character on *unix and darwin
 		apiToken = strings.Replace(apiToken, "\r", "", -1) // removes return character on windows
 
-		outlyer.UserConfig.Set("api-token", apiToken)
+		config.CLI.Set("api-token", apiToken)
 
-		_, err := outlyer.Get("/user")
+		_, err := api.Get("/user")
 		if err != nil {
 			fmt.Fprintln(os.Stderr, fmt.Errorf("Error: invalid API token\n%s", err))
 			continue
