@@ -1,14 +1,18 @@
 package command
 
 import (
+	"bufio"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"regexp"
+	"strings"
+	"sync"
 
 	"gopkg.in/yaml.v2"
 
+	"github.com/outlyer/outlyer-cli/api"
 	"github.com/spf13/cobra"
 )
 
@@ -73,6 +77,67 @@ func applyCommand(cmd *cobra.Command, args []string) {
 
 	paths := getPaths(args)
 	resources := getResources(paths)
+
+	fmt.Printf("\nResources to apply...\n\n")
+	for _, resource := range resources {
+		fmt.Printf("\t- %s\n", resource.path)
+	}
+	fmt.Printf("\nAre you sure you want to apply to account '%s'? [y/n] ", account)
+
+	reader := bufio.NewReader(os.Stdin)
+	confirmation, _ := reader.ReadString('\n')
+	confirmation = strings.Replace(confirmation, "\n", "", -1) // removes return character on *unix and darwin
+	confirmation = strings.Replace(confirmation, "\r", "", -1) // removes return character on windows
+
+	if confirmation == "y" || confirmation == "Y" {
+		// Creates WaitGroup to wait for goroutines to finish applying resources concurrently
+		var wg sync.WaitGroup
+
+		for i := 0; i < len(resources); i++ {
+			wg.Add(1)
+			go apply(account, &resources[i], &wg)
+		}
+
+		wg.Wait()
+		fmt.Println("")
+		fmt.Printf(getColumnPattern(), "ACCOUNT", "RESOURCE", "STATUS", "REASON")
+		for _, resource := range resources {
+			if resource.err == nil {
+				fmt.Printf(getColumnPattern(), account, resource.getTypeAndNameWithExtension(), resource.status, "")
+			} else {
+				fmt.Printf(getColumnPattern(), account, resource.getTypeAndNameWithExtension(), "FAIL", resource.err)
+			}
+		}
+		fmt.Println("")
+	} else {
+		fmt.Println("Skipping apply. 0 resources applied.")
+	}
+}
+
+func apply(account string, resource *resource, wg *sync.WaitGroup) {
+	var resp *api.Response
+	var err error
+	if resource.getType() == "plugins" {
+		resp, err = api.Patch("/accounts/"+account+"/"+resource.getTypeAndNameWithExtension(), resource.bytes)
+	} else {
+		resp, err = api.Patch("/accounts/"+account+"/"+resource.getTypeAndName(), resource.bytes)
+	}
+	if err != nil {
+		ExitWithError(ExitError, fmt.Errorf("could not process request"))
+	}
+
+	resource.status = "OK [UPDATED]"
+	resource.err = resp.ErrorDetail
+
+	if resp.Code == 404 {
+		resp, err = api.Post("/accounts/"+account+"/"+resource.getType(), resource.bytes)
+		if err != nil {
+			ExitWithError(ExitError, fmt.Errorf("could not process request"))
+		}
+		resource.status = "OK [CREATED]"
+		resource.err = resp.ErrorDetail
+	}
+	wg.Done()
 }
 
 func getPaths(args []string) []string {
@@ -171,4 +236,8 @@ func convertCheckFieldsToSend(bytes []byte) []byte {
 		ExitWithError(ExitError, fmt.Errorf("Error marshalling resource %s\n%s", check["name"], err))
 	}
 	return checkInBytes
+}
+
+func getColumnPattern() string {
+	return "%-20s\t%-40s\t%-20s\t%-25v\n"
 }
