@@ -69,6 +69,7 @@ func applyCommand(cmd *cobra.Command, args []string) {
 	}
 
 	paths := getPaths(args)
+	resources := getResources(paths)
 }
 
 func getPaths(args []string) []string {
@@ -119,4 +120,24 @@ func getPaths(args []string) []string {
 	}
 
 	return paths
+}
+
+func getResources(paths []string) []resource {
+	resources := make([]resource, len(paths))
+	for i, path := range paths {
+		bytes, err := ioutil.ReadFile(path)
+		if err != nil {
+			ExitWithError(ExitError, err)
+		}
+
+		res := resource{path, bytes, "FAIL", nil}
+		if res.getType() == "checks" {
+			res.bytes = convertCheckFieldsToSend(bytes)
+		} else if res.getType() == "plugins" {
+			res.bytes = bytes
+			res = convertPlugin(res)
+		}
+		resources[i] = res
+	}
+	return resources
 }
