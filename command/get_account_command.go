@@ -3,7 +3,7 @@ package command
 import (
 	"fmt"
 
-	"github.com/outlyer/outlyer-cli"
+	"github.com/outlyer/outlyer-cli/api"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +19,7 @@ func NewGetAccountCommand() *cobra.Command {
 
 // listUserAccounts fetches the Outlyer API and lists the user's accounts
 func listUserAccounts(cmd *cobra.Command, args []string) {
-	resp, err := outlyer.Get("/accounts")
+	resp, err := api.Get("/accounts")
 	if err != nil {
 		ExitWithError(ExitError, fmt.Errorf("Could not fetch user's accounts\n%s", err))
 	}
