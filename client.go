@@ -52,6 +52,11 @@ func Get(endpoint string) ([]byte, error) {
 	return content, nil
 }
 
+// Post will set the API token and default headers before issuing a POST request to Outlyer API
+func Post(endpoint string, payload []byte) (*APIResponse, error) {
+	return send(endpoint, "POST", payload)
+}
+
 // Patch will set the API token and default headers before issuing a PATCH request to Outlyer API
 func Patch(endpoint string, payload []byte) (*APIResponse, error) {
 	return send(endpoint, "PATCH", payload)
