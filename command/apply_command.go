@@ -57,8 +57,38 @@ func (r *resource) getNameWithExtension() string {
 func NewApplyCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "apply .|[folder]|[file]",
-		Short: "Apply resources to the specified account. The available resources are: alerts, checks, dashboards and plugins",
-		Run:   applyCommand,
+		Short: "Updates a resource (or s set of resources) if it already exists or creates it otherwise. The available resources are: alerts, checks, dashboards and plugins",
+		Example: `
+Suppose the following directory structure:
+
+demo/
+	alerts/
+		elasticsearch.yaml
+	checks/
+		elasticsearch.yaml
+	dashboards/
+		elasticsearch.yaml
+	plugins/
+		elasticsearch.py
+
+Applies all resources to the account by executing the command from inside the 'demo' directory:
+$ outlyer apply . --account=<your_account>
+
+Applies all resources to the account by executing the command from outside the 'demo' directory:
+$ outlyer apply path_to/demo --account=<your_account>
+
+Applies only alerts and dashboards to the account by executing the command from inside the 'demo' directory:
+$ outlyer alerts dashboards --account=<your_account>
+
+Applies only alerts and dashboards to the account by executing the command from outside the 'demo' directory:
+$ outlyer path_to/demo/alerts path_to/demo/dashboards --account=<your_account>
+
+Applies all dashboards and the elasticsearch plugin to the account by executing the command from inside the 'demo' directory:
+$ outlyer apply dashboards plugins/elasticsearch.yaml --account=<your_account>
+
+Applies all dashboards and the elasticsearch plugin to the account by executing the command from outside the 'demo' directory:
+$ outlyer apply path_to/demo/dashboards path_to/demo/plugins/elasticsearch.yaml --account=<your_account>`,
+		Run: applyCommand,
 	}
 
 	cmd.PersistentFlags().StringP("account", "a", "", "(Required) User account to use")
