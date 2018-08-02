@@ -1,4 +1,4 @@
-project_name: outlyer
+project_name: outlyer-cli
 builds:
 - env:
   - CGO_ENABLED=0
@@ -30,7 +30,7 @@ changelog:
     - Merge pull request
     - Merge branch
 brew:
-  name: outlyer
+  name: outlyer-cli
   github:
     owner: outlyerapp
     name: outlyer-cli
