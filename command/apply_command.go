@@ -147,7 +147,7 @@ func applyCommand(cmd *cobra.Command, args []string) {
 func apply(account string, resource *resource, wg *sync.WaitGroup) {
 	var resp *api.Response
 	var err error
-	if resource.getType() == "plugins" {
+	if resource.getType() == Plugins {
 		resp, err = api.Patch("/accounts/"+account+"/"+resource.getTypeAndNameWithExtension(), resource.bytes)
 	} else {
 		resp, err = api.Patch("/accounts/"+account+"/"+resource.getTypeAndName(), resource.bytes)
@@ -229,9 +229,9 @@ func getResources(paths []string) []resource {
 		}
 
 		res := resource{path, bytes, "FAIL", nil}
-		if res.getType() == "checks" {
+		if res.getType() == Checks {
 			res.bytes = convertCheckFieldsToSend(bytes)
-		} else if res.getType() == "plugins" {
+		} else if res.getType() == Plugins {
 			res.bytes = bytes
 			res = convertPlugin(res)
 		}

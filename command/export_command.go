@@ -60,10 +60,10 @@ func exportCommand(cmd *cobra.Command, args []string) {
 	for _, resourceToFetch := range args {
 		if resourceToFetch == "." {
 			args = args[:0]
-			args = append(args, "alerts")
-			args = append(args, "checks")
-			args = append(args, "dashboards")
-			args = append(args, "plugins")
+			args = append(args, Alerts)
+			args = append(args, Checks)
+			args = append(args, Dashboards)
+			args = append(args, Plugins)
 			break
 		}
 	}
@@ -72,7 +72,7 @@ func exportCommand(cmd *cobra.Command, args []string) {
 	var resourceNames []string
 	for _, resourceToFetch := range args {
 		var resources []map[string]interface{}
-		if resourceToFetch == "alerts" {
+		if resourceToFetch == Alerts {
 			resp, err := api.Get("/accounts/" + account + "/" + resourceToFetch)
 			if err != nil {
 				ExitWithError(ExitError, fmt.Errorf("Could not fetch %s from account %s\n%s", resourceToFetch, account, err))
@@ -84,7 +84,7 @@ func exportCommand(cmd *cobra.Command, args []string) {
 				resourceNames = append(resourceNames, "alerts/"+resource["name"].(string))
 			}
 		}
-		if resourceToFetch == "checks" {
+		if resourceToFetch == Checks {
 			resp, err := api.Get("/accounts/" + account + "/" + resourceToFetch)
 			if err != nil {
 				ExitWithError(ExitError, fmt.Errorf("Could not fetch %s from account %s\n%s", resourceToFetch, account, err))
@@ -96,7 +96,7 @@ func exportCommand(cmd *cobra.Command, args []string) {
 				resourceNames = append(resourceNames, "checks/"+resource["name"].(string))
 			}
 		}
-		if resourceToFetch == "dashboards" {
+		if resourceToFetch == Dashboards {
 			resp, err := api.Get("/accounts/" + account + "/" + resourceToFetch)
 			if err != nil {
 				ExitWithError(ExitError, fmt.Errorf("Could not fetch %s from account %s\n%s", resourceToFetch, account, err))
@@ -108,7 +108,7 @@ func exportCommand(cmd *cobra.Command, args []string) {
 				resourceNames = append(resourceNames, "dashboards/"+resource["name"].(string))
 			}
 		}
-		if resourceToFetch == "plugins" {
+		if resourceToFetch == Plugins {
 			resp, err := api.Get("/accounts/" + account + "/" + resourceToFetch)
 			if err != nil {
 				ExitWithError(ExitError, fmt.Errorf("Could not fetch %s from account %s\n%s", resourceToFetch, account, err))
@@ -121,10 +121,10 @@ func exportCommand(cmd *cobra.Command, args []string) {
 			}
 		}
 	}
-	args = remove(args, "alerts")
-	args = remove(args, "dashboards")
-	args = remove(args, "checks")
-	args = remove(args, "plugins")
+	args = remove(args, Alerts)
+	args = remove(args, Dashboards)
+	args = remove(args, Checks)
+	args = remove(args, Plugins)
 	args = append(args, resourceNames...)
 	args = removeDuplicates(args)
 
