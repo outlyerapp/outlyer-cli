@@ -12,7 +12,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/outlyer/outlyer-cli/api"
+	"github.com/outlyerapp/outlyer-cli/api"
 	"github.com/spf13/cobra"
 )
 

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/outlyer/outlyer-cli/api"
+	"github.com/outlyerapp/outlyer-cli/api"
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 )

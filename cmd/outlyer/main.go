@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/outlyer/outlyer-cli/command"
+	"github.com/outlyerapp/outlyer-cli/command"
 	"github.com/spf13/cobra"
 )
 

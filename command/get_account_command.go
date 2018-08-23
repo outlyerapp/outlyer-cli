@@ -3,7 +3,7 @@ package command
 import (
 	"fmt"
 
-	"github.com/outlyer/outlyer-cli/api"
+	"github.com/outlyerapp/outlyer-cli/api"
 	"github.com/spf13/cobra"
 )
 

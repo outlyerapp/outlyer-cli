@@ -9,8 +9,8 @@ import (
 	"os/user"
 	"strings"
 
-	"github.com/outlyer/outlyer-cli/api"
-	"github.com/outlyer/outlyer-cli/config"
+	"github.com/outlyerapp/outlyer-cli/api"
+	"github.com/outlyerapp/outlyer-cli/config"
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 )

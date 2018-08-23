@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/outlyer/outlyer-cli/config"
+	"github.com/outlyerapp/outlyer-cli/config"
 )
 
 // Response represents an Outlyer API response when HTTP response
