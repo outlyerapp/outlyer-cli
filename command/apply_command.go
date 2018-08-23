@@ -57,7 +57,7 @@ func (r *resource) getNameWithExtension() string {
 func NewApplyCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "apply .|[folder]|[file]",
-		Short: "Updates a resource (or s set of resources) if it already exists or creates it otherwise. The available resources are: alerts, checks, dashboards and plugins",
+		Short: "Updates a resource (or a set of resources) if it already exists or creates it otherwise. The available resources are: alerts, checks, dashboards and plugins",
 		Example: `
 Suppose the following directory structure:
 
@@ -84,7 +84,7 @@ Applies only alerts and dashboards to the account by executing the command from 
 $ outlyer path_to/demo/alerts path_to/demo/dashboards --account=<your_account>
 
 Applies all dashboards and the elasticsearch plugin to the account by executing the command from inside the 'demo' directory:
-$ outlyer apply dashboards plugins/elasticsearch.yaml --account=<your_account>
+$ outlyer apply dashboards plugins/elasticsearch.py --account=<your_account>
 
 Applies all dashboards and the elasticsearch plugin to the account by executing the command from outside the 'demo' directory:
 $ outlyer apply path_to/demo/dashboards path_to/demo/plugins/elasticsearch.yaml --account=<your_account>`,

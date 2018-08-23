@@ -56,32 +56,93 @@ func exportCommand(cmd *cobra.Command, args []string) {
 	// Creates WaitGroup to wait for goroutines to finish exporting resources concurrently
 	var wg sync.WaitGroup
 
-	// Avoids fetching specific resources if the arguments contain "all"
+	// Revert this code block when the view export is implemented for all endpoints
 	for _, resourceToFetch := range args {
 		if resourceToFetch == "." {
-			wg.Add(4)
-			go export("alerts", account, getOutputFolder(outputFolderFlag, "alerts"), &wg)
-			go export("checks", account, getOutputFolder(outputFolderFlag, "checks"), &wg)
-			go export("dashboards", account, getOutputFolder(outputFolderFlag, "dashboards"), &wg)
-			go export("plugins", account, getOutputFolder(outputFolderFlag, "plugins"), &wg)
-			wg.Wait()
-			ExitWithSuccess("Done! Your account was successfully exported")
+			args = args[:0]
+			args = append(args, "alerts")
+			args = append(args, "checks")
+			args = append(args, "dashboards")
+			args = append(args, "plugins")
+			break
 		}
 	}
 
-	// There is no "all" argument, so fetches all listed resources
+	// Remove this code block when the view export is implemented for all endpoints
+	var resourceNames []string
+	for _, resourceToFetch := range args {
+		var resources []map[string]interface{}
+		if resourceToFetch == "alerts" {
+			resp, err := api.Get("/accounts/" + account + "/" + resourceToFetch)
+			if err != nil {
+				ExitWithError(ExitError, fmt.Errorf("Could not fetch %s from account %s\n%s", resourceToFetch, account, err))
+			}
+
+			yaml.Unmarshal(resp, &resources)
+
+			for _, resource := range resources {
+				resourceNames = append(resourceNames, "alerts/"+resource["name"].(string))
+			}
+		}
+		if resourceToFetch == "checks" {
+			resp, err := api.Get("/accounts/" + account + "/" + resourceToFetch)
+			if err != nil {
+				ExitWithError(ExitError, fmt.Errorf("Could not fetch %s from account %s\n%s", resourceToFetch, account, err))
+			}
+
+			yaml.Unmarshal(resp, &resources)
+
+			for _, resource := range resources {
+				resourceNames = append(resourceNames, "checks/"+resource["name"].(string))
+			}
+		}
+		if resourceToFetch == "dashboards" {
+			resp, err := api.Get("/accounts/" + account + "/" + resourceToFetch)
+			if err != nil {
+				ExitWithError(ExitError, fmt.Errorf("Could not fetch %s from account %s\n%s", resourceToFetch, account, err))
+			}
+
+			yaml.Unmarshal(resp, &resources)
+
+			for _, resource := range resources {
+				resourceNames = append(resourceNames, "dashboards/"+resource["name"].(string))
+			}
+		}
+		if resourceToFetch == "plugins" {
+			resp, err := api.Get("/accounts/" + account + "/" + resourceToFetch)
+			if err != nil {
+				ExitWithError(ExitError, fmt.Errorf("Could not fetch %s from account %s\n%s", resourceToFetch, account, err))
+			}
+
+			yaml.Unmarshal(resp, &resources)
+
+			for _, resource := range resources {
+				resourceNames = append(resourceNames, "plugins/"+resource["name"].(string))
+			}
+		}
+	}
+	args = remove(args, "alerts")
+	args = remove(args, "dashboards")
+	args = remove(args, "checks")
+	args = remove(args, "plugins")
+	args = append(args, resourceNames...)
+	args = removeDuplicates(args)
+
+	// There is no "." argument, so fetches all listed resources
 	for _, resourceToFetch := range args {
 		wg.Add(1)
 		go export(resourceToFetch, account, getOutputFolder(outputFolderFlag, resourceToFetch), &wg)
 	}
 	wg.Wait()
-	ExitWithSuccess("Done! Resources successfully exported")
+
+	fmt.Println("Resources successfully exported:")
+	for _, resource := range args {
+		fmt.Printf("- %s\n", resource)
+	}
 }
 
 // export queries the resources for the given user account and persists them locally
 func export(resourceToFetch, account, outputFolder string, wg *sync.WaitGroup) {
-	fmt.Printf("Exporting %s...\n", resourceToFetch)
-
 	resp, err := api.Get("/accounts/" + account + "/" + resourceToFetch + "?view=export")
 	if err != nil {
 		ExitWithError(ExitError, fmt.Errorf("Could not fetch %s from account %s\n%s", resourceToFetch, account, err))
@@ -142,6 +203,12 @@ func convertCheckFields(checks []map[string]interface{}, outputFolder string) {
 
 			delete(check, "format")
 			delete(check, "variables")
+
+			// These deletes below can be removed as soon as the view export feature is implemented for all endpoints
+			delete(check, "author")
+			delete(check, "created")
+			delete(check, "id")
+			delete(check, "modified")
 		}
 	}
 }
@@ -175,4 +242,14 @@ func getOutputFolder(outputFolderFlag, resourceToFetch string) string {
 // isSingleResource checks whether the user provided a single resource like dashboards/docker
 func isSingleResource(resourceToFetch string) bool {
 	return strings.Contains(resourceToFetch, "/")
+}
+
+// remove removes a string from a []string
+func remove(s []string, r string) []string {
+	for i, v := range s {
+		if v == r {
+			return append(s[:i], s[i+1:]...)
+		}
+	}
+	return s
 }
