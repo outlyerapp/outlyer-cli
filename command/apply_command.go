@@ -229,9 +229,7 @@ func getResources(paths []string) []resource {
 		}
 
 		res := resource{path, bytes, "FAIL", nil}
-		if res.getType() == Checks {
-			res.bytes = convertCheckFieldsToSend(bytes)
-		} else if res.getType() == Plugins {
+		if res.getType() == Plugins {
 			res.bytes = bytes
 			res = convertPlugin(res)
 		}
@@ -246,26 +244,6 @@ func convertPlugin(res resource) resource {
 	pluginInBytes, _ := yaml.Marshal(&plugin)
 	res.bytes = pluginInBytes
 	return res
-}
-
-func convertCheckFieldsToSend(bytes []byte) []byte {
-	check := make(map[string]interface{})
-	yaml.Unmarshal(bytes, &check)
-
-	format := check["handler"]
-	variables := check["env"]
-
-	check["format"] = format
-	check["variables"] = variables
-
-	delete(check, "handler")
-	delete(check, "env")
-
-	checkInBytes, err := yaml.Marshal(check)
-	if err != nil {
-		ExitWithError(ExitError, fmt.Errorf("Error marshalling resource %s\n%s", check["name"], err))
-	}
-	return checkInBytes
 }
 
 func getColumnPattern() string {
