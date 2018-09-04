@@ -159,7 +159,6 @@ func export(resourceToFetch, account, outputFolder string, wg *sync.WaitGroup) {
 		yaml.Unmarshal(resp, &resources)
 	}
 
-	convertCheckFields(resources, outputFolder)
 	os.MkdirAll(outputFolder, 0755)
 
 	for _, resource := range resources {
@@ -187,30 +186,6 @@ func export(resourceToFetch, account, outputFolder string, wg *sync.WaitGroup) {
 		}
 	}
 	wg.Done()
-}
-
-// convertCheckFields converts the format and variables field names into handler and env
-// this function can be removed as soon as https://github.com/outlyerapp/public_api/issues/349
-// is merged.
-func convertCheckFields(checks []map[string]interface{}, outputFolder string) {
-	if strings.Contains(outputFolder, "checks") {
-		for _, check := range checks {
-			handler := check["format"]
-			env := check["variables"]
-
-			check["handler"] = handler
-			check["env"] = env
-
-			delete(check, "format")
-			delete(check, "variables")
-
-			// These deletes below can be removed as soon as the view export feature is implemented for all endpoints
-			delete(check, "author")
-			delete(check, "created")
-			delete(check, "id")
-			delete(check, "modified")
-		}
-	}
 }
 
 // getOutputFolder is a helper function to build the correct output folder to export the given resource
