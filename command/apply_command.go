@@ -30,19 +30,19 @@ type resource struct {
 }
 
 func (r *resource) getType() string {
-	regex := regexp.MustCompile(`(alerts|checks|dashboards|plugins)`)
+	regex := regexp.MustCompile(`(alerts|checks|dashboards|plugins|views)`)
 	res := regex.FindStringSubmatch(r.path)
 	return res[0]
 }
 
 func (r *resource) getTypeAndName() string {
-	regex := regexp.MustCompile(`(alerts|checks|dashboards|plugins)/[^.]+`)
+	regex := regexp.MustCompile(`(alerts|checks|dashboards|plugins|views)/[^.]+`)
 	res := regex.FindStringSubmatch(r.path)
 	return res[0]
 }
 
 func (r *resource) getTypeAndNameWithExtension() string {
-	regex := regexp.MustCompile(`(alerts|checks|dashboards|plugins)/.+`)
+	regex := regexp.MustCompile(`(alerts|checks|dashboards|plugins|views)/.+`)
 	res := regex.FindStringSubmatch(r.path)
 	return res[0]
 }
@@ -57,7 +57,7 @@ func (r *resource) getNameWithExtension() string {
 func NewApplyCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "apply .|[folder]|[file]",
-		Short: "Updates a resource (or a set of resources) if it already exists or creates it otherwise. The available resources are: alerts, checks, dashboards and plugins",
+		Short: "Updates a resource (or a set of resources) if it already exists or creates it otherwise. The available resources are: alerts, checks, dashboards, plugins and views",
 		Example: `
 Suppose the following directory structure:
 
@@ -70,6 +70,8 @@ demo/
 		elasticsearch.yaml
 	plugins/
 		elasticsearch.py
+	views/
+		elasticsearch.yaml
 
 Applies all resources to the account by executing the command from inside the 'demo' directory:
 $ outlyer apply . --account=<your_account>
@@ -181,7 +183,7 @@ func getPaths(args []string) []string {
 		fileInfo, _ := os.Stat(arg)
 		if fileInfo.IsDir() {
 			arg = appendSlashTo(arg)
-			dirWithResourceName, _ := regexp.Compile("(alerts|checks|dashboards|plugins)/")
+			dirWithResourceName, _ := regexp.Compile("(alerts|checks|dashboards|plugins|views)/")
 			if dirWithResourceName.MatchString(arg) { // Is the dir a resource name?
 				files, _ := ioutil.ReadDir(arg)
 				for _, file := range files { // Then add all resources from it
@@ -193,7 +195,7 @@ func getPaths(args []string) []string {
 				files, _ := ioutil.ReadDir(arg)
 				for _, file := range files {
 					if file.IsDir() {
-						regex, _ := regexp.Compile("(alerts|checks|dashboards|plugins)")
+						regex, _ := regexp.Compile("(alerts|checks|dashboards|plugins|views)")
 						if regex.MatchString(file.Name()) {
 							resources, _ := ioutil.ReadDir(arg + file.Name())
 							for _, resource := range resources {
@@ -204,7 +206,7 @@ func getPaths(args []string) []string {
 				}
 			}
 		} else {
-			validResourcePath, _ := regexp.Compile("(.*)(alerts|checks|dashboards|plugins)/[^.]+...[^.]")
+			validResourcePath, _ := regexp.Compile("(.*)(alerts|checks|dashboards|plugins|views)/[^.]+...[^.]")
 			if validResourcePath.MatchString(arg) {
 				paths = append(paths, arg)
 			}
