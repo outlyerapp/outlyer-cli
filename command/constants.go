@@ -9,4 +9,6 @@ const (
 	Dashboards = "dashboards"
 	//Plugins represents the plugins resource name in Outlyer
 	Plugins = "plugins"
+	//Views represents the views resource name in Outlyer
+	Views = "views"
 )

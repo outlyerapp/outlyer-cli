@@ -20,10 +20,10 @@ func NewExportCommand() *cobra.Command {
 		Use:   "export .|[resource]|[resource/name]",
 		Short: "Export resources from the specified account. The available resources are: alerts, checks, dashboards and plugins",
 		Example: `
-Export the entire account resources (alerts, checks, dashboards and plugins) to the current folder:
+Export the entire account resources (alerts, checks, dashboards, plugins and views) to the current folder:
 $ outlyer export . --account=<your_account>
 
-Export the entire account resources (alerts, checks, dashboards and plugins) to a specific folder:
+Export the entire account resources (alerts, checks, dashboards, plugins and views) to a specific folder:
 $ outlyer export . --account=<your_account> --folder=<your_folder>
 
 Export the account's alerts and dashboards to the current folder:
@@ -56,7 +56,7 @@ func exportCommand(cmd *cobra.Command, args []string) {
 	// Creates WaitGroup to wait for goroutines to finish exporting resources concurrently
 	var wg sync.WaitGroup
 
-	// Revert this code block when the view export is implemented for all endpoints
+	// Adds all resources if arguments contain "."
 	for _, resourceToFetch := range args {
 		if resourceToFetch == "." {
 			args = args[:0]
@@ -64,69 +64,10 @@ func exportCommand(cmd *cobra.Command, args []string) {
 			args = append(args, Checks)
 			args = append(args, Dashboards)
 			args = append(args, Plugins)
+			args = append(args, Views)
 			break
 		}
 	}
-
-	// Remove this code block when the view export is implemented for all endpoints
-	var resourceNames []string
-	for _, resourceToFetch := range args {
-		var resources []map[string]interface{}
-		if resourceToFetch == Alerts {
-			resp, err := api.Get("/accounts/" + account + "/" + resourceToFetch)
-			if err != nil {
-				ExitWithError(ExitError, fmt.Errorf("Could not fetch %s from account %s\n%s", resourceToFetch, account, err))
-			}
-
-			yaml.Unmarshal(resp, &resources)
-
-			for _, resource := range resources {
-				resourceNames = append(resourceNames, "alerts/"+resource["name"].(string))
-			}
-		}
-		if resourceToFetch == Checks {
-			resp, err := api.Get("/accounts/" + account + "/" + resourceToFetch)
-			if err != nil {
-				ExitWithError(ExitError, fmt.Errorf("Could not fetch %s from account %s\n%s", resourceToFetch, account, err))
-			}
-
-			yaml.Unmarshal(resp, &resources)
-
-			for _, resource := range resources {
-				resourceNames = append(resourceNames, "checks/"+resource["name"].(string))
-			}
-		}
-		if resourceToFetch == Dashboards {
-			resp, err := api.Get("/accounts/" + account + "/" + resourceToFetch)
-			if err != nil {
-				ExitWithError(ExitError, fmt.Errorf("Could not fetch %s from account %s\n%s", resourceToFetch, account, err))
-			}
-
-			yaml.Unmarshal(resp, &resources)
-
-			for _, resource := range resources {
-				resourceNames = append(resourceNames, "dashboards/"+resource["name"].(string))
-			}
-		}
-		if resourceToFetch == Plugins {
-			resp, err := api.Get("/accounts/" + account + "/" + resourceToFetch)
-			if err != nil {
-				ExitWithError(ExitError, fmt.Errorf("Could not fetch %s from account %s\n%s", resourceToFetch, account, err))
-			}
-
-			yaml.Unmarshal(resp, &resources)
-
-			for _, resource := range resources {
-				resourceNames = append(resourceNames, "plugins/"+resource["name"].(string))
-			}
-		}
-	}
-	args = remove(args, Alerts)
-	args = remove(args, Dashboards)
-	args = remove(args, Checks)
-	args = remove(args, Plugins)
-	args = append(args, resourceNames...)
-	args = removeDuplicates(args)
 
 	// There is no "." argument, so fetches all listed resources
 	for _, resourceToFetch := range args {
@@ -217,14 +158,4 @@ func getOutputFolder(outputFolderFlag, resourceToFetch string) string {
 // isSingleResource checks whether the user provided a single resource like dashboards/docker
 func isSingleResource(resourceToFetch string) bool {
 	return strings.Contains(resourceToFetch, "/")
-}
-
-// remove removes a string from a []string
-func remove(s []string, r string) []string {
-	for i, v := range s {
-		if v == r {
-			return append(s[:i], s[i+1:]...)
-		}
-	}
-	return s
 }
