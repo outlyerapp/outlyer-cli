@@ -69,6 +69,79 @@ func exportCommand(cmd *cobra.Command, args []string) {
 		}
 	}
 
+	// Fetches resources
+	var resourceNames []string
+	for _, resourceToFetch := range args {
+		var resources []map[string]interface{}
+		if resourceToFetch == Alerts {
+			resp, err := api.Get("/accounts/" + account + "/" + resourceToFetch)
+			if err != nil {
+				ExitWithError(ExitError, fmt.Errorf("Could not fetch %s from account %s\n%s", resourceToFetch, account, err))
+			}
+
+			yaml.Unmarshal(resp, &resources)
+
+			for _, resource := range resources {
+				resourceNames = append(resourceNames, "alerts/"+resource["name"].(string))
+			}
+		}
+		if resourceToFetch == Checks {
+			resp, err := api.Get("/accounts/" + account + "/" + resourceToFetch)
+			if err != nil {
+				ExitWithError(ExitError, fmt.Errorf("Could not fetch %s from account %s\n%s", resourceToFetch, account, err))
+			}
+
+			yaml.Unmarshal(resp, &resources)
+
+			for _, resource := range resources {
+				resourceNames = append(resourceNames, "checks/"+resource["name"].(string))
+			}
+		}
+		if resourceToFetch == Dashboards {
+			resp, err := api.Get("/accounts/" + account + "/" + resourceToFetch)
+			if err != nil {
+				ExitWithError(ExitError, fmt.Errorf("Could not fetch %s from account %s\n%s", resourceToFetch, account, err))
+			}
+
+			yaml.Unmarshal(resp, &resources)
+
+			for _, resource := range resources {
+				resourceNames = append(resourceNames, "dashboards/"+resource["name"].(string))
+			}
+		}
+		if resourceToFetch == Plugins {
+			resp, err := api.Get("/accounts/" + account + "/" + resourceToFetch)
+			if err != nil {
+				ExitWithError(ExitError, fmt.Errorf("Could not fetch %s from account %s\n%s", resourceToFetch, account, err))
+			}
+
+			yaml.Unmarshal(resp, &resources)
+
+			for _, resource := range resources {
+				resourceNames = append(resourceNames, "plugins/"+resource["name"].(string))
+			}
+		}
+		if resourceToFetch == Views {
+			resp, err := api.Get("/accounts/" + account + "/" + resourceToFetch)
+			if err != nil {
+				ExitWithError(ExitError, fmt.Errorf("Could not fetch %s from account %s\n%s", resourceToFetch, account, err))
+			}
+
+			yaml.Unmarshal(resp, &resources)
+
+			for _, resource := range resources {
+				resourceNames = append(resourceNames, "views/"+resource["name"].(string))
+			}
+		}
+	}
+	args = remove(args, Alerts)
+	args = remove(args, Dashboards)
+	args = remove(args, Checks)
+	args = remove(args, Plugins)
+	args = remove(args, Views)
+	args = append(args, resourceNames...)
+	args = removeDuplicates(args)
+
 	// There is no "." argument, so fetches all listed resources
 	for _, resourceToFetch := range args {
 		wg.Add(1)
@@ -158,4 +231,14 @@ func getOutputFolder(outputFolderFlag, resourceToFetch string) string {
 // isSingleResource checks whether the user provided a single resource like dashboards/docker
 func isSingleResource(resourceToFetch string) bool {
 	return strings.Contains(resourceToFetch, "/")
+}
+
+// remove removes a string from a []string
+func remove(s []string, r string) []string {
+	for i, v := range s {
+		if v == r {
+			return append(s[:i], s[i+1:]...)
+		}
+	}
+	return s
 }
